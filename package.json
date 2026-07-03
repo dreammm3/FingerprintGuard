@@ -1,0 +1,21 @@
+{
+  "name": "fingerprintguard",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Research prototype for API-agnostic browser fingerprinting detection.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "clean": "node build.js clean",
+    "build": "node build.js production",
+    "dev": "node build.js development",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.4.5"
+  }
+}
