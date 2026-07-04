@@ -1,28 +1,43 @@
 // Project: FingerprintGuard
 // Module: Background Service Worker
-// Purpose: Listens to extension messages, validates their structure, and logs valid messages to debug console.
+// Purpose: Receives validated messages from the Content Script.
+//
+// Responsibilities:
+// - Receive extension messages.
+// - Validate message schema.
+// - Log valid messages.
+//
+// Must NOT:
+// - Store data.
+// - Compute observations.
+// - Compute behavioral indicators.
+// - Perform ML inference.
+// - Modify browser state.
 
-import { isValidFingerprintGuardMessage } from '../shared/message';
+import { isValidFingerprintGuardMessage } from "../shared/message";
+
+const LOG_PREFIX = "[FingerprintGuard]";
 
 /**
- * Listens for messages dispatched from content scripts, validates them,
- * and logs valid FingerprintGuardMessage payloads.
+ * Handles incoming extension messages.
+ * Only messages matching the FingerprintGuardMessage schema are accepted.
  */
-function setupBackgroundListener(): void {
-  chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-    try {
-      if (isValidFingerprintGuardMessage(message)) {
-        console.debug('FingerprintGuard: Received valid message:', message);
-      }
-      // Silently ignore invalid messages without throwing errors
-    } catch (error) {
-      // Catch any unexpected runtime errors to avoid throwing unhandled exceptions
-      console.error('FingerprintGuard: Unexpected error in background listener:', error);
-    }
-    
-    // Return true or false as appropriate. Since we don't send responses yet, we do not return true.
+function handleMessage(message: unknown): void {
+  if (!isValidFingerprintGuardMessage(message)) {
+    return;
+  }
+
+  console.debug(LOG_PREFIX, "Received valid message:", message);
+}
+
+/**
+ * Registers the background message listener.
+ */
+function initializeBackgroundServiceWorker(): void {
+  chrome.runtime.onMessage.addListener((message: unknown) => {
+    handleMessage(message);
   });
 }
 
-// Initialize listener setup
-setupBackgroundListener();
+// Initialize the background service worker.
+initializeBackgroundServiceWorker();

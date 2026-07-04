@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Instrumentation Manual Test | FingerprintGuard</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #121824;
+      --accent: #3b82f6;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --border: #1e293b;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .description {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      background: #020617;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    canvas {
+      border: 1px dashed var(--border);
+      background: transparent;
+    }
+
+    .status-panel, .expected-panel {
+      background: #0a0e17;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-panel h3, .expected-panel h3 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      color: #60a5fa;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge.unknown {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .log-panel {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+    }
+
+    .log-entry {
+      margin-bottom: 0.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .log-entry.success {
+      border-left-color: var(--success);
+    }
+
+    .log-entry.error {
+      border-left-color: #ef4444;
+    }
+
+    .timestamp {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+    }
+
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .checklist li {
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checklist-icon {
+      color: var(--success);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FingerprintGuard — Canvas Instrumentation Manual Test</h1>
+    <p class="description">
+      This page provides interactive triggers for testing the wrapped canvas read APIs (<code>toDataURL</code> and <code>getImageData</code>).
+      Check the browser console to see the published <code>InstrumentationEvent</code> output.
+    </p>
+
+    <div class="canvas-container">
+      <canvas id="testCanvas" width="200" height="100"></canvas>
+    </div>
+
+    <!-- Status Panel -->
+    <div class="status-panel">
+      <h3>FingerprintGuard Status</h3>
+      <div class="status-grid">
+        <div class="status-item">
+          <span>Extension Loaded</span>
+          <span class="badge unknown">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>Canvas Instrumentation</span>
+          <span class="badge unknown">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>Observation Publisher</span>
+          <span class="badge unknown">Unknown</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnDataURL">Trigger toDataURL()</button>
+      <button id="btnImageData">Trigger getImageData()</button>
+      <button id="btnRunAll">Run All Tests</button>
+    </div>
+
+    <div class="log-panel" id="logPanel"></div>
+
+    <!-- Expected Results -->
+    <div class="expected-panel">
+      <h3>Expected Results</h3>
+      <ul class="checklist">
+        <li><span class="checklist-icon">✓</span> toDataURL returns a valid data URL</li>
+        <li><span class="checklist-icon">✓</span> getImageData returns an ImageData object</li>
+        <li><span class="checklist-icon">✓</span> Browser console contains one instrumentation event per API call</li>
+        <li><span class="checklist-icon">✓</span> No JavaScript errors occur</li>
+        <li><span class="checklist-icon">✓</span> Page behavior remains unchanged</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('testCanvas');
+    const ctx = canvas.getContext('2d');
+    const logPanel = document.getElementById('logPanel');
+
+    // Draw something on the canvas
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(10, 10, 180, 80);
+    ctx.fillStyle = '#10b981';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('FingerprintGuard', 30, 50);
+
+    // Initial setup with clean start message
+    logPanel.innerHTML = '';
+    log('Canvas initialized. Ready for manual testing.', 'info', 'System');
+
+    /**
+     * Appends a log entry to the page log panel.
+     */
+    function log(message, type = 'info', operation = 'System') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'timestamp';
+      timeSpan.textContent = `[${new Date().toLocaleTimeString()}]`;
+      
+      const opSpan = document.createElement('strong');
+      opSpan.style.marginRight = '0.5rem';
+      opSpan.textContent = `[${operation}]`;
+
+      entry.appendChild(timeSpan);
+      entry.appendChild(opSpan);
+      entry.appendChild(document.createTextNode(message));
+      
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    /**
+     * Executes HTMLCanvasElement.prototype.toDataURL() and logs results.
+     */
+    function runToDataURL() {
+      const op = 'toDataURL';
+      try {
+        log('Executing toDataURL()...', 'info', op);
+        const dataURL = canvas.toDataURL();
+        log(`Success: Returned data URL (length: ${dataURL.length} chars)`, 'success', op);
+      } catch (err) {
+        log(`Failure: ${err.message}`, 'error', op);
+        console.error(err);
+      }
+    }
+
+    /**
+     * Executes CanvasRenderingContext2D.prototype.getImageData() and logs results.
+     */
+    function runGetImageData() {
+      const op = 'getImageData';
+      try {
+        log('Executing getImageData()...', 'info', op);
+        const imgData = ctx.getImageData(0, 0, 50, 50);
+        log(`Success: Extracted ImageData (${imgData.width}x${imgData.height})`, 'success', op);
+      } catch (err) {
+        log(`Failure: ${err.message}`, 'error', op);
+        console.error(err);
+      }
+    }
+
+    // Button event listeners
+    document.getElementById('btnDataURL').addEventListener('click', runToDataURL);
+    document.getElementById('btnImageData').addEventListener('click', runGetImageData);
+    
+    document.getElementById('btnRunAll').addEventListener('click', () => {
+      log('Running all tests...', 'info', 'Suite');
+      runToDataURL();
+      runGetImageData();
+    });
+
+    // Automatic startup test sequence execution delayed by 100ms
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        log('Executing automatic startup tests...', 'info', 'Startup');
+        runToDataURL();
+        runGetImageData();
+      }, 100);
+    });
+  </script>
+</body>
+</html>
