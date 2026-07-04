@@ -2,6 +2,8 @@
 // Module: Injected Script
 // Purpose: Executes inside the webpage context and sends a bootstrap message.
 
+import { initializeCanvasInstrumentation } from "../../core/instrumentation/canvasInstrumentation";
+
 function sendTestMessage(): void {
   const message = {
     type: "TEST_BOOTSTRAP",
@@ -16,6 +18,7 @@ function sendTestMessage(): void {
 }
 
 function initializeInjectedScript(): void {
+  initializeCanvasInstrumentation();
   sendTestMessage();
 }
 
