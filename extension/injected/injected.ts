@@ -3,6 +3,7 @@
 // Purpose: Executes inside the webpage context and sends a bootstrap message.
 
 import { initializeCanvasInstrumentation } from "../../core/instrumentation/canvasInstrumentation";
+import { initializeWebGLInstrumentation } from "../../core/instrumentation/webglInstrumentation";
 
 function sendTestMessage(): void {
   const message = {
@@ -14,11 +15,12 @@ function sendTestMessage(): void {
     }
   };
 
-  window.postMessage(message, window.location.origin);
+  window.postMessage(message, "*");
 }
 
 function initializeInjectedScript(): void {
   initializeCanvasInstrumentation();
+  initializeWebGLInstrumentation();
   sendTestMessage();
 }
 

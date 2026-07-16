@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGL Instrumentation Manual Test | FingerprintGuard</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #121824;
+      --accent: #3b82f6;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #1e293b;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .description {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .canvas-wrapper {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .canvas-container {
+      background: #020617;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .canvas-container span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    canvas {
+      border: 1px dashed var(--border);
+      background: transparent;
+      width: 80px;
+      height: 40px;
+    }
+
+    .status-panel, .expected-panel {
+      background: #0a0e17;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-panel h3, .expected-panel h3 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      color: #60a5fa;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge.unknown {
+      background-color: rgba(156, 163, 175, 0.15);
+      color: var(--text-muted);
+      border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .badge.pass {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge.unsupported {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge.fail {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .log-panel {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+    }
+
+    .log-entry {
+      margin-bottom: 0.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .log-entry.success {
+      border-left-color: var(--success);
+    }
+
+    .log-entry.warning {
+      border-left-color: var(--warning);
+    }
+
+    .log-entry.error {
+      border-left-color: var(--danger);
+    }
+
+    .timestamp {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+    }
+
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .checklist li {
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checklist-icon {
+      color: var(--success);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FingerprintGuard — WebGL Instrumentation Manual Test</h1>
+    <p class="description">
+      This page triggers WebGL rendering context operations. 
+      Inspect the browser console to verify that target API calls are logged correctly.
+    </p>
+
+    <div class="canvas-wrapper">
+      <div class="canvas-container">
+        <span>WebGL 1 Canvas</span>
+        <canvas id="webgl1Canvas" width="80" height="40"></canvas>
+      </div>
+      <div class="canvas-container">
+        <span>WebGL 2 Canvas</span>
+        <canvas id="webgl2Canvas" width="80" height="40"></canvas>
+      </div>
+    </div>
+
+    <!-- Status Panel -->
+    <div class="status-panel">
+      <h3>Test Execution Status</h3>
+      <div class="status-grid">
+        <div class="status-item">
+          <span>WebGL1 Context Created</span>
+          <span class="badge unknown" id="statusGl1Ctx">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>WebGL2 Context Created</span>
+          <span class="badge unknown" id="statusGl2Ctx">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>WebGL1 VERSION</span>
+          <span class="badge unknown" id="statusGl1Version">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>WebGL2 VERSION</span>
+          <span class="badge unknown" id="statusGl2Version">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>WebGL1 VENDOR</span>
+          <span class="badge unknown" id="statusGl1Vendor">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>WebGL2 VENDOR</span>
+          <span class="badge unknown" id="statusGl2Vendor">Unknown</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnWebGL1">Run WebGL1 Tests</button>
+      <button id="btnWebGL2">Run WebGL2 Tests</button>
+      <button id="btnRunAll">Run All Tests</button>
+    </div>
+
+    <div class="log-panel" id="logPanel"></div>
+
+    <!-- Expected Results -->
+    <div class="expected-panel">
+      <h3>Expected Verification Criteria</h3>
+      <ul class="checklist">
+        <li><span class="checklist-icon">✓</span> Context Creation succeeds (or reports unsupported for WebGL2)</li>
+        <li><span class="checklist-icon">✓</span> getParameter(VERSION) and getParameter(VENDOR) output display correctly on the page</li>
+        <li><span class="checklist-icon">✓</span> Browser console logs the corresponding <code>[FingerprintGuard] API call observed: ...</code> event per invocation</li>
+        <li><span class="checklist-icon">✓</span> No JavaScript exceptions occur</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const logPanel = document.getElementById('logPanel');
+    
+    // Globally cached contexts to prevent recreation on every trigger
+    let gl1 = null;
+    let gl2 = null;
+    let gl2Checked = false; // Tracks if we already attempted to context-create WebGL2
+
+    // Initial setup message
+    logPanel.innerHTML = '';
+    log('WebGL test environment ready.', 'info', 'System');
+
+    /**
+     * Appends a log entry to the UI.
+     */
+    function log(message, type = 'info', operation = 'System') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'timestamp';
+      timeSpan.textContent = `[${new Date().toLocaleTimeString()}]`;
+      
+      const opSpan = document.createElement('strong');
+      opSpan.style.marginRight = '0.5rem';
+      opSpan.textContent = `[${operation}]`;
+
+      entry.appendChild(timeSpan);
+      entry.appendChild(opSpan);
+      entry.appendChild(document.createTextNode(message));
+      
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    /**
+     * Helper to update UI badge status.
+     */
+    function updateBadge(id, text, className) {
+      const badge = document.getElementById(id);
+      if (badge) {
+        badge.textContent = text;
+        badge.className = `badge ${className}`;
+      }
+    }
+
+    /**
+     * Executes WebGL1 getParameter calls.
+     */
+    function runWebGL1Tests() {
+      const op = 'WebGL1';
+      log('Initializing WebGL1 tests...', 'info', op);
+      const canvas = document.getElementById('webgl1Canvas');
+
+      if (!canvas) {
+        log('Canvas element #webgl1Canvas not found.', 'error', op);
+        updateBadge('statusGl1Ctx', 'FAIL', 'fail');
+        return;
+      }
+
+      try {
+        if (!gl1) {
+          gl1 = canvas.getContext('webgl');
+        }
+
+        if (!gl1) {
+          log('WebGL1 context creation returned null.', 'error', op);
+          updateBadge('statusGl1Ctx', 'FAIL', 'fail');
+          return;
+        }
+
+        log('Context Created: PASS', 'success', op);
+        updateBadge('statusGl1Ctx', 'PASS', 'pass');
+
+        const version = gl1.getParameter(gl1.VERSION);
+        if (version === null || version === undefined) {
+          log('gl.VERSION: returned null/undefined', 'warning', op);
+          updateBadge('statusGl1Version', 'FAIL', 'fail');
+        } else {
+          log(`gl.VERSION: ${version}`, 'info', op);
+          updateBadge('statusGl1Version', version, 'pass');
+        }
+
+        const vendor = gl1.getParameter(gl1.VENDOR);
+        if (vendor === null || vendor === undefined) {
+          log('gl.VENDOR: returned null/undefined', 'warning', op);
+          updateBadge('statusGl1Vendor', 'FAIL', 'fail');
+        } else {
+          log(`gl.VENDOR: ${vendor}`, 'info', op);
+          updateBadge('statusGl1Vendor', vendor, 'pass');
+        }
+
+        log('WebGL1 tests execution completed successfully.', 'success', op);
+      } catch (err) {
+        log(`WebGL1 Test exception: ${err.message}`, 'error', op);
+        console.error(err);
+      }
+    }
+
+    /**
+     * Executes WebGL2 getParameter calls.
+     */
+    function runWebGL2Tests() {
+      const op = 'WebGL2';
+      log('Initializing WebGL2 tests...', 'info', op);
+      const canvas = document.getElementById('webgl2Canvas');
+
+      if (!canvas) {
+        log('Canvas element #webgl2Canvas not found.', 'error', op);
+        updateBadge('statusGl2Ctx', 'FAIL', 'fail');
+        return;
+      }
+
+      try {
+        if (!gl2 && !gl2Checked) {
+          gl2 = canvas.getContext('webgl2');
+          gl2Checked = true;
+        }
+
+        if (!gl2) {
+          console.warn('WebGL2 is not supported on this browser/platform.');
+          log('WebGL2 Context Created: UNSUPPORTED (See console warning)', 'warning', op);
+          updateBadge('statusGl2Ctx', 'UNSUPPORTED', 'unsupported');
+          updateBadge('statusGl2Version', 'N/A', 'unknown');
+          updateBadge('statusGl2Vendor', 'N/A', 'unknown');
+          return;
+        }
+
+        log('Context Created: PASS', 'success', op);
+        updateBadge('statusGl2Ctx', 'PASS', 'pass');
+
+        const version = gl2.getParameter(gl2.VERSION);
+        if (version === null || version === undefined) {
+          log('gl.VERSION: returned null/undefined', 'warning', op);
+          updateBadge('statusGl2Version', 'FAIL', 'fail');
+        } else {
+          log(`gl.VERSION: ${version}`, 'info', op);
+          updateBadge('statusGl2Version', version, 'pass');
+        }
+
+        const vendor = gl2.getParameter(gl2.VENDOR);
+        if (vendor === null || vendor === undefined) {
+          log('gl.VENDOR: returned null/undefined', 'warning', op);
+          updateBadge('statusGl2Vendor', 'FAIL', 'fail');
+        } else {
+          log(`gl.VENDOR: ${vendor}`, 'info', op);
+          updateBadge('statusGl2Vendor', vendor, 'pass');
+        }
+
+        log('WebGL2 tests execution completed successfully.', 'success', op);
+      } catch (err) {
+        log(`WebGL2 Test exception: ${err.message}`, 'error', op);
+        console.error(err);
+      }
+    }
+
+    /**
+     * Executes both suites sequentially.
+     */
+    function runAllTests() {
+      // Clear log panel at start of Run All Tests
+      logPanel.innerHTML = '';
+      log('Starting full suite execution...', 'info', 'AllTests');
+      runWebGL1Tests();
+      runWebGL2Tests();
+    }
+
+    // Button event listeners
+    document.getElementById('btnWebGL1').addEventListener('click', runWebGL1Tests);
+    document.getElementById('btnWebGL2').addEventListener('click', runWebGL2Tests);
+    document.getElementById('btnRunAll').addEventListener('click', runAllTests);
+  </script>
+</body>
+</html>
