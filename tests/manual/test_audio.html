@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Instrumentation Manual Test | FingerprintGuard</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #121824;
+      --accent: #3b82f6;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #1e293b;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .description {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .status-panel, .expected-panel {
+      background: #0a0e17;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-panel h3, .expected-panel h3 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      color: #60a5fa;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge.unknown {
+      background-color: rgba(156, 163, 175, 0.15);
+      color: var(--text-muted);
+      border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+
+    .badge.pass {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge.fail {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .log-panel {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+    }
+
+    .log-entry {
+      margin-bottom: 0.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .log-entry.success {
+      border-left-color: var(--success);
+    }
+
+    .log-entry.error {
+      border-left-color: var(--danger);
+    }
+
+    .timestamp {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+    }
+
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .checklist li {
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checklist-icon {
+      color: var(--success);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FingerprintGuard — Audio Instrumentation Manual Test</h1>
+    <p class="description">
+      This page triggers OfflineAudioContext rendering operations.
+      Inspect the browser console to verify that target API calls are logged correctly.
+    </p>
+
+    <!-- Status Panel -->
+    <div class="status-panel">
+      <h3>Test Execution Status</h3>
+      <div class="status-grid">
+        <div class="status-item">
+          <span>OfflineAudioContext Created</span>
+          <span class="badge unknown" id="statusContext">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>startRendering() Completed</span>
+          <span class="badge unknown" id="statusStartRendering">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>getChannelData() Completed</span>
+          <span class="badge unknown" id="statusGetChannelData">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>sampleRate</span>
+          <span class="badge unknown" id="statusSampleRate">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>numberOfChannels</span>
+          <span class="badge unknown" id="statusNumberOfChannels">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span>length</span>
+          <span class="badge unknown" id="statusLength">Unknown</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnRunAudio">Run Audio Tests</button>
+    </div>
+
+    <div class="log-panel" id="logPanel"></div>
+
+    <!-- Expected Results -->
+    <div class="expected-panel">
+      <h3>Expected Verification Criteria</h3>
+      <ul class="checklist">
+        <li><span class="checklist-icon">✓</span> OfflineAudioContext creation succeeds with correct properties</li>
+        <li><span class="checklist-icon">✓</span> startRendering() Promise resolves successfully</li>
+        <li><span class="checklist-icon">✓</span> getChannelData(0) is called on the resolved AudioBuffer</li>
+        <li><span class="checklist-icon">✓</span> sampleRate, numberOfChannels, and length match initial parameters</li>
+        <li><span class="checklist-icon">✓</span> Browser console logs the corresponding <code>[FingerprintGuard] API call observed: ...</code> event per invocation</li>
+        <li><span class="checklist-icon">✓</span> No JavaScript exceptions occur</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const logPanel = document.getElementById('logPanel');
+
+    // Initial setup message
+    logPanel.innerHTML = '';
+    log('Audio test environment ready.', 'info', 'System');
+
+    /**
+     * Appends a log entry to the UI.
+     */
+    function log(message, type = 'info', operation = 'System') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'timestamp';
+      timeSpan.textContent = `[${new Date().toLocaleTimeString()}]`;
+
+      const opSpan = document.createElement('strong');
+      opSpan.style.marginRight = '0.5rem';
+      opSpan.textContent = `[${operation}]`;
+
+      entry.appendChild(timeSpan);
+      entry.appendChild(opSpan);
+      entry.appendChild(document.createTextNode(message));
+
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    /**
+     * Helper to update UI badge status.
+     */
+    function updateBadge(id, text, className) {
+      const badge = document.getElementById(id);
+      if (badge) {
+        badge.textContent = text;
+        badge.className = `badge ${className}`;
+      }
+    }
+
+    /**
+     * Executes the audio tests following the exact required sequence and constraints.
+     */
+    function runAudioTests() {
+      const op = 'AudioTest';
+      log('Starting Audio tests...', 'info', op);
+
+      // Reset badges to unknown before starting
+      updateBadge('statusContext', 'Unknown', 'unknown');
+      updateBadge('statusStartRendering', 'Unknown', 'unknown');
+      updateBadge('statusGetChannelData', 'Unknown', 'unknown');
+      updateBadge('statusSampleRate', 'Unknown', 'unknown');
+      updateBadge('statusNumberOfChannels', 'Unknown', 'unknown');
+      updateBadge('statusLength', 'Unknown', 'unknown');
+
+      try {
+        // 1. Create OfflineAudioContext with positional arguments
+        // numberOfChannels: 1, length: 4096, sampleRate: 44100
+        const context = new OfflineAudioContext(1, 4096, 44100);
+        log('OfflineAudioContext created successfully.', 'success', op);
+        updateBadge('statusContext', 'PASS', 'pass');
+
+        // 2. Call startRendering() - returns Promise<AudioBuffer>
+        log('Calling startRendering()...', 'info', op);
+        context.startRendering()
+          .then(function(audioBuffer) {
+            log('startRendering() Promise resolved.', 'success', op);
+            updateBadge('statusStartRendering', 'PASS', 'pass');
+
+            // 3. Inside the .then() callback, call getChannelData(0)
+            log('Calling getChannelData(0)...', 'info', op);
+            const channelData = audioBuffer.getChannelData(0);
+            if (channelData && channelData instanceof Float32Array) {
+              log('getChannelData(0) returned Float32Array successfully.', 'success', op);
+              updateBadge('statusGetChannelData', 'PASS', 'pass');
+            } else {
+              log('getChannelData(0) failed to return Float32Array.', 'error', op);
+              updateBadge('statusGetChannelData', 'FAIL', 'fail');
+            }
+
+            // 4. Display parameters from the AudioBuffer (no inspection of channelData)
+            const sampleRate = audioBuffer.sampleRate;
+            const numberOfChannels = audioBuffer.numberOfChannels;
+            const length = audioBuffer.length;
+
+            log(`AudioBuffer properties: sampleRate=${sampleRate}, numberOfChannels=${numberOfChannels}, length=${length}`, 'info', op);
+            updateBadge('statusSampleRate', String(sampleRate), 'pass');
+            updateBadge('statusNumberOfChannels', String(numberOfChannels), 'pass');
+            updateBadge('statusLength', String(length), 'pass');
+
+            log('Audio tests completed successfully.', 'success', op);
+          })
+          .catch(function(err) {
+            log(`startRendering() Promise rejected: ${err.message}`, 'error', op);
+            updateBadge('statusStartRendering', 'FAIL', 'fail');
+            updateBadge('statusGetChannelData', 'FAIL', 'fail');
+            updateBadge('statusSampleRate', 'FAIL', 'fail');
+            updateBadge('statusNumberOfChannels', 'FAIL', 'fail');
+            updateBadge('statusLength', 'FAIL', 'fail');
+            console.error(err);
+          });
+
+      } catch (err) {
+        log(`OfflineAudioContext creation failed: ${err.message}`, 'error', op);
+        updateBadge('statusContext', 'FAIL', 'fail');
+        updateBadge('statusStartRendering', 'FAIL', 'fail');
+        updateBadge('statusGetChannelData', 'FAIL', 'fail');
+        updateBadge('statusSampleRate', 'FAIL', 'fail');
+        updateBadge('statusNumberOfChannels', 'FAIL', 'fail');
+        updateBadge('statusLength', 'FAIL', 'fail');
+        console.error(err);
+      }
+    }
+
+    // Button event listener
+    document.getElementById('btnRunAudio').addEventListener('click', runAudioTests);
+  </script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 
 import { initializeCanvasInstrumentation } from "../../core/instrumentation/canvasInstrumentation";
 import { initializeWebGLInstrumentation } from "../../core/instrumentation/webglInstrumentation";
+import { initializeAudioInstrumentation } from "../../core/instrumentation/audioInstrumentation";
 
 function sendTestMessage(): void {
   const message = {
@@ -21,6 +22,7 @@ function sendTestMessage(): void {
 function initializeInjectedScript(): void {
   initializeCanvasInstrumentation();
   initializeWebGLInstrumentation();
+  initializeAudioInstrumentation();
   sendTestMessage();
 }
 
