@@ -14,7 +14,7 @@ export const LOG_PREFIX = "[FingerprintGuard]";
  * @param args Additional arguments or context objects.
  */
 export function debug(message: string, ...args: unknown[]): void {
-  console.debug(`${LOG_PREFIX} ${message}`, ...args);
+  console.log(`${LOG_PREFIX} ${message}`, ...args);
 }
 
 /**
